@@ -19,3 +19,6 @@ uploads/
 docker-compose*.yml
 Dockerfile
 README.md
+
+# The SPA is built and served separately (nginx), not baked into the API image
+frontend/
