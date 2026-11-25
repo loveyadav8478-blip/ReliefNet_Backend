@@ -1,0 +1,58 @@
+# ReliefNet backend + PostgreSQL.
+#
+# All values come from the shell environment or the local .env file beside this
+# compose file — no secrets are stored here. Required values fail fast with a
+# clear message if they are missing.
+#
+#   cp .env.example .env     (then fill in the values)
+#   docker compose up --build
+#
+# The backend listens on ${BACKEND_PORT:-8081} and keeps uploads/database data
+# in named volumes, so a redeploy does not lose images or records.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-resource_allocation}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-resource_allocation}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set (32+ characters)}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600000}
+      COORDINATOR_INVITE_CODE: ${COORDINATOR_INVITE_CODE:?COORDINATOR_INVITE_CODE must be set}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_API_URL: ${GEMINI_API_URL:-https://generativelanguage.googleapis.com}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+      UPLOAD_DIR: ${UPLOAD_DIR:-/app/uploads/needs}
+    ports:
+      # Loopback only: the reverse proxy (nginx/Caddy) is the public entry point.
+      # "127.0.0.1:" keeps the API off the public interface even if a firewall
+      # rule is wrong; drop it only if something else on the network needs it.
+      - "127.0.0.1:${BACKEND_PORT:-8081}:8080"
+    volumes:
+      - uploads:/app/uploads
+
+volumes:
+  db-data:
+  uploads:

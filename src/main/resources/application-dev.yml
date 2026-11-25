@@ -1,0 +1,28 @@
+# Development profile — local runs only. Opt-in, never active by default.
+#   mvn spring-boot:run                   (pom.xml activates 'dev' for you)
+#   SPRING_PROFILES_ACTIVE=dev java -jar target/*.jar
+#
+# The demo seed in src/main/resources/data.sql is NOT loaded: the board starts empty so
+# every incident on screen is one a real user reported. Opt back in for a seeded demo with
+#   SQL_INIT_MODE=always SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run
+spring:
+  jpa:
+    # Let Hibernate create/update the schema first, then (opt-in) run data.sql
+    defer-datasource-initialization: true
+
+    # Verbose SQL echo — local debugging only, never active outside this profile.
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  sql:
+    init:
+      mode: ${SQL_INIT_MODE:never}
+      data-locations: classpath:data.sql
+
+# Application-level DEBUG logging for local development only.
+logging:
+  level:
+    com:
+      hackathon: DEBUG

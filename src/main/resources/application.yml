@@ -1,0 +1,87 @@
+server:
+  port: ${PORT:8081}
+
+spring:
+  # .env (project root) is the single local config file: PORT, DB_*, JWT_*, Gemini keys.
+  # optional: = the app still boots when the file is absent (packaged jar / Docker).
+  config:
+    import: optional:file:.env[.properties]
+
+  # No default profile: the demo seed (data.sql) loads ONLY under the 'dev' profile,
+  # which is opt-in (SPRING_PROFILES_ACTIVE=dev, or `mvn spring-boot:run`).
+  # Any deployment that sets no profile — including the Docker image — never seeds.
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/resource_allocation}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
+
+    hikari:
+      maximum-pool-size: 5
+      auto-commit: true
+      data-source-properties:
+        prepareThreshold: 0
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    # SQL echo and formatted queries are dev-only: application-dev.yml turns them on.
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+        jdbc:
+          lob:
+            non_contextual_creation: true
+
+  # NOTE: demo seed data (data.sql) is loaded only under the 'dev' profile —
+  # see application-dev.yml. It never runs in prod or any other profile.
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 30MB
+
+  web:
+    resources:
+      static-locations: ${STATIC_RESOURCES:null}
+
+# ---- AI (Gemini) ----
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:null}
+    url: ${GEMINI_API_URL:null}
+    # 1.5-flash was shut down by Google; 3.5-flash-lite is the current migration target.
+    model: ${GEMINI_MODEL:gemini-3.5-flash-lite}
+
+# ---- App Config ----
+app:
+  coordinator:
+    invite-code: ${COORDINATOR_INVITE_CODE:CODE_FOR_COORD}
+
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:null}
+
+  matching:
+    max-results: 5
+    default-radius-km: 20
+
+  jwt:
+    secret: ${JWT_SECRET:this-is-a-dev-only-secret-change-it-before-production-32chars+}
+    expiration-ms: ${JWT_EXPIRATION:3000000000}
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION:10000}
+
+  upload:
+    dir: ${UPLOAD_DIR:/uploads/needs}
+
+# ---- Logging ----
+logging:
+  level:
+    # Application DEBUG logging is dev-only (application-dev.yml).
+    com:
+      hackathon: INFO
+    org:
+      springframework:
+        web: INFO

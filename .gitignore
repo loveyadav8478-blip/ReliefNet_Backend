@@ -1,0 +1,20 @@
+# Build output
+target/
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Uploaded files are runtime data
+uploads/
+
+# Logs
+*.log
+
+# Tooling / IDE / OS
+.idea/
+.DS_Store
+node_modules/
+.freebuff/
+.cloud-attachments/

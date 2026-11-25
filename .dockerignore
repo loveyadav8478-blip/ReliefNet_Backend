@@ -1,0 +1,21 @@
+# Build output and local state
+target/
+uploads/
+*.log
+
+# Secrets — never sent to the build daemon
+.env
+.env.*
+
+# Local tooling / IDE / OS
+.git/
+.gitignore
+.idea/
+.DS_Store
+.freebuff/
+.cloud-attachments/
+
+# Deployment files that are not needed inside the image
+docker-compose*.yml
+Dockerfile
+README.md
